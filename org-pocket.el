@@ -48,7 +48,7 @@ items are captured at a time."
   (unless org-pocket-capture-tag
     (user-error "Please set `org-pocket-capture-tag'"))
   (when-let ((file org-pocket-capture-file)
-             (items (alist-get 'list (pocket-lib-get :tag org-pocket-capture-tag))))
+             (items (alist-get 'list (pocket-lib-get :detail-type "complete"))))
     (cl-loop for item in items
              when (org-pocket--capture-item item :file file)
              sum 1 into count
@@ -62,10 +62,16 @@ items are captured at a time."
 
 (cl-defun org-pocket--capture-item (item &key file)
   (when-let ((url (alist-get 'resolved_url item))
+             (tags (alist-get 'tags item))
              (rfloc (list nil file nil org-pocket-capture-position)))
     (with-temp-buffer
       (org-mode)
       (when (org-web-tools-insert-web-page-as-entry url)
+        (org-set-tags
+         (mapcar
+          (lambda (x)
+            (symbol-name (car x)))
+          tags))
         ;; FIXME: Not sure that this will actually return nil if it doesn't work
         (goto-char (point-min))
         (org-refile nil nil rfloc)))))
